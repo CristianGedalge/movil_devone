@@ -48,6 +48,76 @@ class OneDevService {
     }
   }
 
+  /// Inicia sesión con usuario y contraseña
+  Future<UserModel> loginWithCredentials({
+    required String username,
+    required String password,
+  }) async {
+    await AppConfig.instance.saveUserSession(
+      username: username,
+      password: password,
+    );
+
+    try {
+      UserModel? user;
+      try {
+        final userData = await _client.get('/users/me');
+        if (userData is Map<String, dynamic>) {
+          user = UserModel.fromJson(userData);
+        }
+      } catch (_) {
+        // Fallback de validación con /projects
+        await _client.get('/projects', queryParameters: {'count': 1});
+      }
+
+      final finalUser = user ?? UserModel(id: 0, name: username, fullName: username);
+      await AppConfig.instance.saveUserSession(
+        username: username,
+        password: password,
+        displayName: finalUser.displayName,
+        userId: finalUser.id,
+      );
+      return finalUser;
+    } catch (e) {
+      await AppConfig.instance.logout();
+      if (e is ApiException && e.statusCode == 401) {
+        throw ApiException('Usuario o contraseña incorrectos.');
+      }
+      rethrow;
+    }
+  }
+
+  /// Inicia sesión con Personal Access Token
+  Future<UserModel> loginWithToken(String token) async {
+    await AppConfig.instance.saveTokenSession(token: token);
+
+    try {
+      UserModel? user;
+      try {
+        final userData = await _client.get('/users/me');
+        if (userData is Map<String, dynamic>) {
+          user = UserModel.fromJson(userData);
+        }
+      } catch (_) {
+        await _client.get('/projects', queryParameters: {'count': 1});
+      }
+
+      final finalUser = user ?? UserModel(id: 0, name: 'Usuario Token');
+      await AppConfig.instance.saveTokenSession(
+        token: token,
+        displayName: finalUser.displayName,
+        userId: finalUser.id,
+      );
+      return finalUser;
+    } catch (e) {
+      await AppConfig.instance.logout();
+      if (e is ApiException && e.statusCode == 401) {
+        throw ApiException('El token de acceso no es válido o ha expirado.');
+      }
+      rethrow;
+    }
+  }
+
   /// Obtiene el usuario autenticado actual (/me)
   Future<UserModel?> getCurrentUser() async {
     try {
@@ -71,13 +141,20 @@ class OneDevService {
       params['query'] = '"Name" contains "$query"';
     }
 
-    final response = await _client.get('/projects', queryParameters: params);
-    if (response is List) {
-      return response
-          .map((item) => ProjectModel.fromJson(item as Map<String, dynamic>))
-          .toList();
+    try {
+      final response = await _client.get('/projects', queryParameters: params);
+      if (response is List) {
+        return response
+            .map((item) => ProjectModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      if (e is ApiException && e.statusCode == 404) {
+        return [];
+      }
+      rethrow;
     }
-    return [];
   }
 
   /// Detalle de proyecto por ID
@@ -111,13 +188,20 @@ class OneDevService {
       params['query'] = query;
     }
 
-    final response = await _client.get('/issues', queryParameters: params);
-    if (response is List) {
-      return response
-          .map((item) => IssueModel.fromJson(item as Map<String, dynamic>))
-          .toList();
+    try {
+      final response = await _client.get('/issues', queryParameters: params);
+      if (response is List) {
+        return response
+            .map((item) => IssueModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      if (e is ApiException && e.statusCode == 404) {
+        return [];
+      }
+      rethrow;
     }
-    return [];
   }
 
   /// Lista de Pull Requests
@@ -130,13 +214,20 @@ class OneDevService {
       params['query'] = query;
     }
 
-    final response = await _client.get('/pull-requests', queryParameters: params);
-    if (response is List) {
-      return response
-          .map((item) => PullRequestModel.fromJson(item as Map<String, dynamic>))
-          .toList();
+    try {
+      final response = await _client.get('/pulls', queryParameters: params);
+      if (response is List) {
+        return response
+            .map((item) => PullRequestModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      if (e is ApiException && e.statusCode == 404) {
+        return [];
+      }
+      rethrow;
     }
-    return [];
   }
 
   /// Crea una incidencia rápida en un proyecto

@@ -58,21 +58,17 @@ class ApiClient {
       return _handleResponse(response, uri);
     } on SocketException {
       throw ApiException(
-        'No se pudo conectar con el servidor OneDev en:\n${AppConfig.instance.baseUrl}\n\n'
-        '• Verifica que el servidor esté levantado (./dev.sh run).\n'
-        '• Si usas Emulador Android, la IP debe ser: 10.0.2.2:6610\n'
-        '• Si usas un celular físico, usa la IP de tu PC (ej. 192.168.x.x).\n'
-        '• Puedes cambiar la IP en la pestaña Ajustes.',
+        'No se pudo conectar con el servidor. Verifica tu conexión de red e intenta nuevamente.',
         isNetworkError: true,
       );
     } on TimeoutException {
       throw ApiException(
-        'Tiempo de espera agotado al conectar con el servidor OneDev. Verifica la conexión de red.',
+        'El servidor tardó demasiado en responder. Por favor intenta de nuevo.',
         isNetworkError: true,
       );
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw ApiException('Error inesperado de comunicación: $e', isNetworkError: true);
+      throw ApiException('Error de conexión con el servicio.', isNetworkError: true);
     }
   }
 
@@ -90,17 +86,17 @@ class ApiClient {
       return _handleResponse(response, uri);
     } on SocketException {
       throw ApiException(
-        'No se pudo conectar con el servidor OneDev.',
+        'No se pudo conectar con el servidor. Revisa tu conexión.',
         isNetworkError: true,
       );
     } on TimeoutException {
       throw ApiException(
-        'Tiempo de espera agotado al enviar datos al servidor.',
+        'Tiempo de espera agotado al comunicarse con el servidor.',
         isNetworkError: true,
       );
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw ApiException('Error al procesar solicitud: $e');
+      throw ApiException('Error al procesar la solicitud.');
     }
   }
 
@@ -110,31 +106,31 @@ class ApiClient {
       try {
         return jsonDecode(response.body);
       } catch (_) {
-        // Return raw body if not JSON (e.g. plain text version string)
+        // Return raw body if not JSON
         return response.body;
       }
     }
 
     if (response.statusCode == 401) {
       throw ApiException(
-        'Acceso no autorizado (401). Si tu OneDev requiere autenticación, ingresa tu Token o Usuario/Contraseña en Ajustes.',
+        'Credenciales inválidas o sesión expirada. Por favor ingresa tus datos.',
         statusCode: 401,
       );
     }
 
     if (response.statusCode == 403) {
       throw ApiException(
-        'Acceso denegado (403). No tienes permisos para acceder a este recurso.',
+        'No tienes permisos suficientes para realizar esta acción.',
         statusCode: 403,
       );
     }
 
     if (response.statusCode == 404) {
-      throw ApiException('Recurso no encontrado (404) en $uri', statusCode: 404);
+      throw ApiException('Elemento o recurso no encontrado.', statusCode: 404);
     }
 
     throw ApiException(
-      'Error del servidor (${response.statusCode}): ${response.body.isNotEmpty ? response.body : response.reasonPhrase}',
+      'Error en la solicitud (${response.statusCode}).',
       statusCode: response.statusCode,
     );
   }

@@ -21,8 +21,9 @@ class StatusBadge extends StatelessWidget {
         icon = Icons.radio_button_checked;
         break;
       case 'CLOSED':
-        bg = AppTheme.textSecondary.withValues(alpha: 0.15);
-        text = AppTheme.textSecondary;
+        final closedColor = context.textSecondaryColor;
+        bg = closedColor.withValues(alpha: 0.15);
+        text = closedColor;
         icon = Icons.check_circle_outline;
         break;
       case 'MERGED':

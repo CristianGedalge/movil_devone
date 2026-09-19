@@ -84,7 +84,7 @@ class _ProjectsViewState extends State<ProjectsView> {
             controller: _searchController,
             decoration: InputDecoration(
               hintText: 'Buscar proyectos por nombre...',
-              prefixIcon: const Icon(Icons.search, color: AppTheme.textSecondary),
+              prefixIcon: Icon(Icons.search, color: context.textSecondaryColor),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
                       icon: const Icon(Icons.clear, size: 18),
@@ -131,10 +131,10 @@ class _ProjectsViewState extends State<ProjectsView> {
         icon: Icons.folder_open_outlined,
         title: _searchController.text.isNotEmpty
             ? 'Sin resultados'
-            : 'No hay proyectos en OneDev',
+            : 'No hay proyectos en DevOne',
         message: _searchController.text.isNotEmpty
             ? 'No se encontraron proyectos con el término "${_searchController.text}".'
-            : 'Crea un proyecto en el servidor web de OneDev para verlo listado aquí.',
+            : 'Crea un proyecto en el servidor web de DevOne para verlo listado aquí.',
         buttonText: 'Actualizar',
         onAction: _loadProjects,
       );
@@ -177,10 +177,10 @@ class _ProjectsViewState extends State<ProjectsView> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(Icons.folder, color: AppTheme.primaryColor, size: 22),
+                          child: Icon(Icons.folder, color: Theme.of(context).colorScheme.primary, size: 22),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -189,24 +189,24 @@ class _ProjectsViewState extends State<ProjectsView> {
                             children: [
                               Text(
                                 project.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 16,
-                                  color: AppTheme.textPrimary,
+                                  color: context.textPrimaryColor,
                                 ),
                               ),
                               Text(
                                 project.displayPath,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
-                                  color: AppTheme.textSecondary,
+                                  color: context.textSecondaryColor,
                                   fontFamily: 'monospace',
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const Icon(Icons.chevron_right, color: AppTheme.textSecondary),
+                        Icon(Icons.chevron_right, color: context.textSecondaryColor),
                       ],
                     ),
                     if (project.description != null && project.description!.isNotEmpty) ...[
@@ -215,23 +215,23 @@ class _ProjectsViewState extends State<ProjectsView> {
                         project.description!,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                        style: TextStyle(fontSize: 13, color: context.textSecondaryColor),
                       ),
                     ],
                     const SizedBox(height: 12),
                     Row(
                       children: [
                         if (project.codeManagement)
-                          _buildFeatureChip(Icons.code, 'Git'),
+                          _buildFeatureChip(context, Icons.code, 'Git'),
                         if (project.issueManagement) ...[
                           const SizedBox(width: 6),
-                          _buildFeatureChip(Icons.bug_report_outlined, 'Issues'),
+                          _buildFeatureChip(context, Icons.bug_report_outlined, 'Issues'),
                         ],
                         const Spacer(),
                         if (dateStr.isNotEmpty)
                           Text(
                             dateStr,
-                            style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                            style: TextStyle(fontSize: 11, color: context.textSecondaryColor),
                           ),
                       ],
                     ),
@@ -245,24 +245,24 @@ class _ProjectsViewState extends State<ProjectsView> {
     );
   }
 
-  Widget _buildFeatureChip(IconData icon, String label) {
+  Widget _buildFeatureChip(BuildContext context, IconData icon, String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: context.cardColorHigher,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: AppTheme.textSecondary),
+          Icon(icon, size: 12, color: context.textSecondaryColor),
           const SizedBox(width: 4),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: AppTheme.textSecondary,
+              color: context.textSecondaryColor,
             ),
           ),
         ],
