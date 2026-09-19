@@ -4,13 +4,14 @@ import 'package:movil_devone/core/config/app_config.dart';
 import 'package:movil_devone/main.dart';
 
 void main() {
-  testWidgets('OneDevApp smoke test', (WidgetTester tester) async {
+  testWidgets('OneDevApp login smoke test', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
     await AppConfig.init();
 
     await tester.pumpWidget(const OneDevApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('OneDev Móvil'), findsOneWidget);
+    expect(find.text('DevOne Móvil'), findsOneWidget);
+    expect(find.text('Iniciar Sesión'), findsOneWidget);
   });
 }

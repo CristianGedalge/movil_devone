@@ -86,10 +86,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.folder, color: AppTheme.primaryColor, size: 28),
+                        child: Icon(Icons.folder, color: Theme.of(context).colorScheme.primary, size: 28),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -98,15 +98,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                           children: [
                             Text(
                               project.name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
-                                color: AppTheme.textPrimary,
+                                color: context.textPrimaryColor,
                               ),
                             ),
                             Text(
                               'ID: #${project.id} ${project.key != null ? "• Clave: ${project.key}" : ""}',
-                              style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                              style: TextStyle(fontSize: 12, color: context.textSecondaryColor),
                             ),
                           ],
                         ),
@@ -119,7 +119,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                     const SizedBox(height: 12),
                     Text(
                       project.description!,
-                      style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary, height: 1.4),
+                      style: TextStyle(fontSize: 14, color: context.textPrimaryColor, height: 1.4),
                     ),
                   ],
                 ],
@@ -217,13 +217,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppTheme.textSecondary),
+        Icon(icon, size: 18, color: context.textSecondaryColor),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+              Text(label, style: TextStyle(fontSize: 11, color: context.textSecondaryColor)),
               Text(
                 value,
                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
@@ -239,24 +239,24 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: context.cardColorHigher,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.borderSubtle),
+        border: Border.all(color: context.borderColor),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
               protocol,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.primaryColor,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
@@ -264,10 +264,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           Expanded(
             child: Text(
               url,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontFamily: 'monospace',
-                color: AppTheme.textPrimary,
+                color: context.textPrimaryColor,
               ),
               overflow: TextOverflow.ellipsis,
             ),

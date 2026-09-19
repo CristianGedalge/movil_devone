@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../core/config/app_config.dart';
 import '../core/theme/app_theme.dart';
-import '../models/server_status.dart';
 import '../models/project_model.dart';
 import '../models/issue_model.dart';
 import '../models/pull_request_model.dart';
@@ -14,7 +13,6 @@ class DashboardView extends StatefulWidget {
   final VoidCallback onNavigateToProjects;
   final VoidCallback onNavigateToIssues;
   final VoidCallback onNavigateToPullRequests;
-  final VoidCallback onOpenSettings;
 
   const DashboardView({
     super.key,
@@ -22,7 +20,6 @@ class DashboardView extends StatefulWidget {
     required this.onNavigateToProjects,
     required this.onNavigateToIssues,
     required this.onNavigateToPullRequests,
-    required this.onOpenSettings,
   });
 
   @override
@@ -31,7 +28,7 @@ class DashboardView extends StatefulWidget {
 
 class _DashboardViewState extends State<DashboardView> {
   bool _isLoading = true;
-  ServerStatus? _serverStatus;
+  String? _syncError;
   List<ProjectModel> _recentProjects = [];
   int _totalIssues = 0;
   int _openIssues = 0;
@@ -46,29 +43,36 @@ class _DashboardViewState extends State<DashboardView> {
   Future<void> _loadDashboardData() async {
     setState(() {
       _isLoading = true;
+      _syncError = null;
     });
 
     try {
-      final status = await widget.service.checkServerStatus();
-      _serverStatus = status;
+      final projects = await widget.service.getProjects(count: 5);
 
-      if (status.isOnline) {
-        final projectsFuture = widget.service.getProjects(count: 5);
-        final issuesFuture = widget.service.getIssues(count: 50);
-        final pullsFuture = widget.service.getPullRequests(count: 50);
+      List<IssueModel> issues = [];
+      try {
+        issues = await widget.service.getIssues(count: 50);
+      } catch (_) {}
 
-        final results = await Future.wait([projectsFuture, issuesFuture, pullsFuture]);
+      List<PullRequestModel> pulls = [];
+      try {
+        pulls = await widget.service.getPullRequests(count: 50);
+      } catch (_) {}
 
-        _recentProjects = results[0] as List<ProjectModel>;
-        final issues = results[1] as List<IssueModel>;
-        final pulls = results[2] as List<PullRequestModel>;
-
-        _totalIssues = issues.length;
-        _openIssues = issues.where((i) => i.isOpen).length;
-        _totalPulls = pulls.length;
+      if (mounted) {
+        setState(() {
+          _recentProjects = projects;
+          _totalIssues = issues.length;
+          _openIssues = issues.where((i) => i.isOpen).length;
+          _totalPulls = pulls.length;
+        });
       }
-    } catch (_) {
-      // Status error is handled via _serverStatus
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _syncError = e.toString().replaceFirst('Exception: ', '');
+        });
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -88,7 +92,7 @@ class _DashboardViewState extends State<DashboardView> {
             CircularProgressIndicator(color: AppTheme.primaryColor),
             SizedBox(height: 16),
             Text(
-              'Conectando con el servidor OneDev...',
+              'Cargando tu información...',
               style: TextStyle(color: AppTheme.textSecondary),
             ),
           ],
@@ -102,101 +106,118 @@ class _DashboardViewState extends State<DashboardView> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildServerStatusBanner(),
+          _buildWelcomeBanner(),
+          if (_syncError != null) ...[
+            const SizedBox(height: 14),
+            _buildSyncErrorBanner(),
+          ],
           const SizedBox(height: 16),
           _buildKpiMetricsGrid(),
           const SizedBox(height: 24),
           _buildSectionHeader(
-            title: 'Proyectos Recientes',
+            title: 'Tus Proyectos',
             actionText: 'Ver todos (${_recentProjects.length})',
             onTap: widget.onNavigateToProjects,
           ),
           const SizedBox(height: 10),
           _buildProjectsList(),
-          const SizedBox(height: 24),
-          _buildDevTipCard(),
+          const SizedBox(height: 20),
+          _buildQuickShortcutsCard(),
         ],
       ),
     );
   }
 
-  Widget _buildServerStatusBanner() {
-    final isOnline = _serverStatus?.isOnline ?? false;
-    final bannerBg = isOnline ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2);
-    final borderColor = isOnline ? AppTheme.statusSuccess : AppTheme.statusError;
-    final icon = isOnline ? Icons.check_circle : Icons.error_outline;
-    final title = isOnline ? 'Servidor OneDev Conectado' : 'Servidor No Disponible';
+  Widget _buildWelcomeBanner() {
+    final userName = AppConfig.instance.userDisplayName;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: bannerBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor.withValues(alpha: 0.3), width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: borderColor, size: 24),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: borderColor,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-              if (isOnline && _serverStatus?.version != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: borderColor.withValues(alpha: 0.3)),
-                  ),
-                  child: Text(
-                    'v${_serverStatus!.version}',
-                    style: TextStyle(
-                      color: borderColor,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-            ],
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Host: ${AppConfig.instance.baseUrl}',
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppTheme.textSecondary,
-              fontFamily: 'monospace',
+        ],
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 26,
+            backgroundColor: AppTheme.primaryColor,
+            child: Text(
+              userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 22,
+              ),
             ),
           ),
-          if (!isOnline && _serverStatus?.errorMessage != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              _serverStatus!.errorMessage!,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '¡Hola, $userName!',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                const Text(
+                  'Resumen de tus proyectos y actividad en DevOne',
+                  style: TextStyle(
+                    color: Color(0xFF94A3B8),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSyncErrorBanner() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFFCA5A5)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.cloud_off_outlined, color: AppTheme.statusError, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              _syncError ?? 'No se pudo sincronizar la información.',
               style: const TextStyle(fontSize: 12, color: AppTheme.statusError),
             ),
-            const SizedBox(height: 10),
-            ElevatedButton.icon(
-              onPressed: widget.onOpenSettings,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                minimumSize: Size.zero,
-              ),
-              icon: const Icon(Icons.settings, size: 16),
-              label: const Text('Configurar IP en Ajustes', style: TextStyle(fontSize: 12)),
+          ),
+          TextButton(
+            onPressed: _loadDashboardData,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              minimumSize: Size.zero,
             ),
-          ],
+            child: const Text('Reintentar', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
         ],
       ),
     );
@@ -253,12 +274,12 @@ class _DashboardViewState extends State<DashboardView> {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.borderSubtle),
+          border: Border.all(color: context.borderColor),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
+              color: Colors.black.withValues(alpha: context.isDarkMode ? 0.2 : 0.02),
               blurRadius: 10,
               offset: const Offset(0, 4),
             )
@@ -287,16 +308,16 @@ class _DashboardViewState extends State<DashboardView> {
             ),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+                color: context.textPrimaryColor,
               ),
             ),
             if (subtitle != null)
               Text(
                 subtitle,
-                style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+                style: TextStyle(fontSize: 10, color: context.textSecondaryColor),
               ),
           ],
         ),
@@ -314,10 +335,10 @@ class _DashboardViewState extends State<DashboardView> {
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+            color: context.textPrimaryColor,
           ),
         ),
         TextButton(
@@ -338,16 +359,27 @@ class _DashboardViewState extends State<DashboardView> {
   Widget _buildProjectsList() {
     if (_recentProjects.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.borderSubtle),
+          border: Border.all(color: context.borderColor),
         ),
-        child: const Center(
-          child: Text(
-            'No se encontraron proyectos aún en el servidor OneDev.',
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(Icons.folder_open_outlined, color: context.textSecondaryColor, size: 36),
+              const SizedBox(height: 10),
+              Text(
+                'No tienes proyectos asignados aún',
+                style: TextStyle(color: context.textPrimaryColor, fontWeight: FontWeight.w600, fontSize: 14),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Crea o únete a un proyecto en DevOne para verlo aquí',
+                style: TextStyle(color: context.textSecondaryColor, fontSize: 12),
+              ),
+            ],
           ),
         ),
       );
@@ -360,12 +392,12 @@ class _DashboardViewState extends State<DashboardView> {
             : '';
 
         return Card(
-          margin: const EdgeInsets.only(bottom: 10),
+          margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             leading: CircleAvatar(
-              backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-              child: const Icon(Icons.folder_outlined, color: AppTheme.primaryColor),
+              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+              child: Icon(Icons.folder_outlined, color: Theme.of(context).colorScheme.primary),
             ),
             title: Text(
               project.name,
@@ -379,16 +411,16 @@ class _DashboardViewState extends State<DashboardView> {
                     project.description!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                    style: TextStyle(fontSize: 12, color: context.textSecondaryColor),
                   ),
                 const SizedBox(height: 4),
                 Text(
                   'Ruta: ${project.displayPath} ${dateStr.isNotEmpty ? "• $dateStr" : ""}',
-                  style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                  style: TextStyle(fontSize: 11, color: context.textSecondaryColor),
                 ),
               ],
             ),
-            trailing: const Icon(Icons.chevron_right, color: AppTheme.textSecondary),
+            trailing: Icon(Icons.chevron_right, color: context.textSecondaryColor),
             onTap: () {
               Navigator.push(
                 context,
@@ -406,32 +438,29 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
-  Widget _buildDevTipCard() {
+  Widget _buildQuickShortcutsCard() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: context.cardColorHigher,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderSubtle),
+        border: Border.all(color: context.borderColor),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.lightbulb_outline, color: AppTheme.primaryLight, size: 28),
-          SizedBox(width: 14),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Consejo de Desarrollo:',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'Si estás en emulador Android usa la IP 10.0.2.2:6610. Si usas un dispositivo físico por Wi-Fi, ingresa la IP local de tu PC en la pestaña Ajustes.',
-                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-                ),
-              ],
+            child: OutlinedButton.icon(
+              onPressed: widget.onNavigateToProjects,
+              icon: const Icon(Icons.folder_open, size: 18),
+              label: const Text('Explorar Proyectos', style: TextStyle(fontSize: 12)),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: widget.onNavigateToIssues,
+              icon: const Icon(Icons.bug_report, size: 18),
+              label: const Text('Ver Incidencias', style: TextStyle(fontSize: 12)),
             ),
           ),
         ],

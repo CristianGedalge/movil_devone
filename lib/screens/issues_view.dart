@@ -104,7 +104,7 @@ class _IssuesViewState extends State<IssuesView> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.add_task, color: AppTheme.primaryColor),
+                    Icon(Icons.add_task, color: Theme.of(context).colorScheme.primary),
                     const SizedBox(width: 8),
                     const Text(
                       'Nueva Incidencia',
@@ -256,9 +256,9 @@ class _IssuesViewState extends State<IssuesView> {
           _loadIssues();
         }
       },
-      selectedColor: AppTheme.primaryColor,
+      selectedColor: Theme.of(context).colorScheme.primary,
       labelStyle: TextStyle(
-        color: isSelected ? Colors.white : AppTheme.textPrimary,
+        color: isSelected ? (context.isDarkMode ? AppTheme.backgroundDark : Colors.white) : context.textPrimaryColor,
         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
         fontSize: 13,
       ),
@@ -267,8 +267,8 @@ class _IssuesViewState extends State<IssuesView> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppTheme.primaryColor),
+      return Center(
+        child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
       );
     }
 
@@ -287,7 +287,7 @@ class _IssuesViewState extends State<IssuesView> {
         icon: Icons.assignment_turned_in_outlined,
         title: 'Sin incidencias',
         message: _selectedFilter == 'ALL'
-            ? 'No hay incidencias registradas en el servidor OneDev.'
+            ? 'No hay incidencias registradas en el servidor DevOne.'
             : 'No hay incidencias con el filtro seleccionado.',
         buttonText: 'Actualizar',
         onAction: _loadIssues,
@@ -296,7 +296,7 @@ class _IssuesViewState extends State<IssuesView> {
 
     return RefreshIndicator(
       onRefresh: _loadIssues,
-      color: AppTheme.primaryColor,
+      color: Theme.of(context).colorScheme.primary,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         itemCount: _issues.length,
@@ -329,27 +329,27 @@ class _IssuesViewState extends State<IssuesView> {
                         const SizedBox(width: 8),
                         Text(
                           '#${issue.number}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.textSecondary,
+                            color: context.textSecondaryColor,
                           ),
                         ),
                         const Spacer(),
                         if (dateStr.isNotEmpty)
                           Text(
                             dateStr,
-                            style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                            style: TextStyle(fontSize: 11, color: context.textSecondaryColor),
                           ),
                       ],
                     ),
                     const SizedBox(height: 10),
                     Text(
                       issue.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
-                        color: AppTheme.textPrimary,
+                        color: context.textPrimaryColor,
                       ),
                     ),
                     if (issue.description != null && issue.description!.isNotEmpty) ...[
@@ -358,25 +358,25 @@ class _IssuesViewState extends State<IssuesView> {
                         issue.description!,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                        style: TextStyle(fontSize: 12, color: context.textSecondaryColor),
                       ),
                     ],
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                        const Icon(Icons.person_outline, size: 14, color: AppTheme.textSecondary),
+                        Icon(Icons.person_outline, size: 14, color: context.textSecondaryColor),
                         const SizedBox(width: 4),
                         Text(
                           issue.submitterName ?? 'Usuario',
-                          style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                          style: TextStyle(fontSize: 11, color: context.textSecondaryColor),
                         ),
                         if (issue.commentCount > 0) ...[
                           const SizedBox(width: 14),
-                          const Icon(Icons.mode_comment_outlined, size: 13, color: AppTheme.textSecondary),
+                          Icon(Icons.mode_comment_outlined, size: 13, color: context.textSecondaryColor),
                           const SizedBox(width: 4),
                           Text(
                             '${issue.commentCount}',
-                            style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                            style: TextStyle(fontSize: 11, color: context.textSecondaryColor),
                           ),
                         ],
                       ],

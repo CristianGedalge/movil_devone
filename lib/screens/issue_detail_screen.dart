@@ -36,10 +36,10 @@ class IssueDetailScreen extends StatelessWidget {
                       const SizedBox(width: 10),
                       Text(
                         '#${issue.number}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.textSecondary,
+                          color: context.textSecondaryColor,
                         ),
                       ),
                       const Spacer(),
@@ -47,7 +47,7 @@ class IssueDetailScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
+                            color: context.cardColorHigher,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -60,31 +60,31 @@ class IssueDetailScreen extends StatelessWidget {
                   const SizedBox(height: 14),
                   Text(
                     issue.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
-                      color: AppTheme.textPrimary,
+                      color: context.textPrimaryColor,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(Icons.person_outline, size: 16, color: AppTheme.textSecondary),
+                      Icon(Icons.person_outline, size: 16, color: context.textSecondaryColor),
                       const SizedBox(width: 6),
                       Text(
-                        issue.submitterName ?? 'Usuario OneDev',
-                        style: const TextStyle(
+                        issue.submitterName ?? 'Usuario DevOne',
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
+                          color: context.textPrimaryColor,
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Icon(Icons.access_time, size: 15, color: AppTheme.textSecondary),
+                      Icon(Icons.access_time, size: 15, color: context.textSecondaryColor),
                       const SizedBox(width: 4),
                       Text(
                         dateStr,
-                        style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                        style: TextStyle(fontSize: 12, color: context.textSecondaryColor),
                       ),
                     ],
                   ),
@@ -102,31 +102,31 @@ class IssueDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Descripción',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
+                      color: context.textPrimaryColor,
                     ),
                   ),
                   const SizedBox(height: 12),
                   if (issue.description != null && issue.description!.isNotEmpty)
                     Text(
                       issue.description!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: AppTheme.textPrimary,
+                        color: context.textPrimaryColor,
                         height: 1.5,
                       ),
                     )
                   else
-                    const Text(
+                    Text(
                       'Esta incidencia no cuenta con una descripción detallada.',
                       style: TextStyle(
                         fontSize: 13,
                         fontStyle: FontStyle.italic,
-                        color: AppTheme.textSecondary,
+                        color: context.textSecondaryColor,
                       ),
                     ),
                 ],

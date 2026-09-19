@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'core/config/app_config.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize persistent environment configuration
+  // Initialize persistent configuration and session state
   await AppConfig.init();
 
   runApp(const OneDevApp());
@@ -17,11 +18,19 @@ class OneDevApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'OneDev Móvil',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      home: const HomeScreen(),
+    return ListenableBuilder(
+      listenable: AppConfig.instance,
+      builder: (context, _) {
+        final config = AppConfig.instance;
+        return MaterialApp(
+          title: 'DevOne',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: config.themeMode,
+          home: config.isLoggedIn ? const HomeScreen() : const LoginScreen(),
+        );
+      },
     );
   }
 }

@@ -53,8 +53,8 @@ class _PullRequestsViewState extends State<PullRequestsView> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppTheme.primaryColor),
+      return Center(
+        child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
       );
     }
 
@@ -80,7 +80,7 @@ class _PullRequestsViewState extends State<PullRequestsView> {
 
     return RefreshIndicator(
       onRefresh: _loadPullRequests,
-      color: AppTheme.primaryColor,
+      color: Theme.of(context).colorScheme.primary,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: _pullRequests.length,
@@ -103,27 +103,27 @@ class _PullRequestsViewState extends State<PullRequestsView> {
                       const SizedBox(width: 8),
                       Text(
                         '#${pr.number}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.textSecondary,
+                          color: context.textSecondaryColor,
                         ),
                       ),
                       const Spacer(),
                       if (dateStr.isNotEmpty)
                         Text(
                           dateStr,
-                          style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                          style: TextStyle(fontSize: 11, color: context.textSecondaryColor),
                         ),
                     ],
                   ),
                   const SizedBox(height: 10),
                   Text(
                     pr.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
-                      color: AppTheme.textPrimary,
+                      color: context.textPrimaryColor,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -131,7 +131,7 @@ class _PullRequestsViewState extends State<PullRequestsView> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: context.cardColorHigher,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -141,24 +141,24 @@ class _PullRequestsViewState extends State<PullRequestsView> {
                         const SizedBox(width: 4),
                         Text(
                           pr.sourceBranch,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontFamily: 'monospace',
                             fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryColor,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 6),
-                          child: Icon(Icons.arrow_forward, size: 12, color: AppTheme.textSecondary),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Icon(Icons.arrow_forward, size: 12, color: context.textSecondaryColor),
                         ),
                         Text(
                           pr.targetBranch,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontFamily: 'monospace',
                             fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimary,
+                            color: context.textPrimaryColor,
                           ),
                         ),
                       ],
@@ -167,11 +167,11 @@ class _PullRequestsViewState extends State<PullRequestsView> {
                   const SizedBox(height: 10),
                   Row(
                     children: [
-                      const Icon(Icons.person_outline, size: 14, color: AppTheme.textSecondary),
+                      Icon(Icons.person_outline, size: 14, color: context.textSecondaryColor),
                       const SizedBox(width: 4),
                       Text(
-                        pr.submitterName ?? 'Colaborador OneDev',
-                        style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                        pr.submitterName ?? 'Colaborador DevOne',
+                        style: TextStyle(fontSize: 11, color: context.textSecondaryColor),
                       ),
                     ],
                   ),
