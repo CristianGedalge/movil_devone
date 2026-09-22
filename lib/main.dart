@@ -10,11 +10,11 @@ void main() async {
   // Initialize persistent configuration and session state
   await AppConfig.init();
 
-  runApp(const OneDevApp());
+  runApp(const SCMDevApp());
 }
 
-class OneDevApp extends StatelessWidget {
-  const OneDevApp({super.key});
+class SCMDevApp extends StatelessWidget {
+  const SCMDevApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +23,7 @@ class OneDevApp extends StatelessWidget {
       builder: (context, _) {
         final config = AppConfig.instance;
         return MaterialApp(
-          title: 'DevOne',
+          title: 'SCMDev',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,

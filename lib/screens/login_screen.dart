@@ -111,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      'DevOne Móvil',
+                      'SCMDev Móvil',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 26,

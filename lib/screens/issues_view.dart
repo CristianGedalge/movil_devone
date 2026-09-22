@@ -287,7 +287,7 @@ class _IssuesViewState extends State<IssuesView> {
         icon: Icons.assignment_turned_in_outlined,
         title: 'Sin incidencias',
         message: _selectedFilter == 'ALL'
-            ? 'No hay incidencias registradas en el servidor DevOne.'
+            ? 'No hay incidencias registradas en el servidor SCMDev.'
             : 'No hay incidencias con el filtro seleccionado.',
         buttonText: 'Actualizar',
         onAction: _loadIssues,

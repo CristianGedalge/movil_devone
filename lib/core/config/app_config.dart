@@ -18,13 +18,13 @@ class AppConfig extends ChangeNotifier {
   static const String keyUserId = 'onedev_user_id';
   static const String keyThemeMode = 'onedev_theme_mode';
 
-  // URL predeterminada del backend.
-  // En producción se inyecta por entorno (ej. flutter build --dart-define=BACKEND_URL=...)
-  // Para desarrollo local con dispositivo físico, apunta a la IP de la máquina host.
+  // URL predeterminada del backend desplegado en producción.
   static const String defaultBackendUrl = String.fromEnvironment(
     'BACKEND_URL',
-    defaultValue: 'http://192.168.100.50:6610/~api',
+    defaultValue: 'https://scmdev.erikaguilarchuviru.dev/~api',
   );
+  static const String defaultDeployedUrl = 'https://scmdev.erikaguilarchuviru.dev/~api';
+  static const String defaultLocalIpUrl = 'http://192.168.100.50:6610/~api';
   static const String defaultEmulatorUrl = 'http://10.0.2.2:6610/~api';
   static const String defaultLocalhostUrl = 'http://localhost:6610/~api';
 
@@ -65,9 +65,11 @@ class AppConfig extends ChangeNotifier {
     _prefs = await SharedPreferences.getInstance();
 
     final savedUrl = _prefs.getString(keyBaseUrl);
-    // Si no hay URL guardada o tenía la IP antigua del emulador (10.0.2.2) que da timeout en celular físico,
-    // usar la URL del backend del equipo:
-    if (savedUrl == null || savedUrl.contains('10.0.2.2')) {
+    // Si no hay URL guardada o tenía la IP local anterior, actualizar a la URL desplegada en la nube:
+    if (savedUrl == null || 
+        savedUrl.contains('10.0.2.2') || 
+        savedUrl.contains('192.168.100.50') || 
+        savedUrl.contains('localhost')) {
       _baseUrl = defaultBackendUrl;
       await _prefs.setString(keyBaseUrl, _baseUrl);
     } else {

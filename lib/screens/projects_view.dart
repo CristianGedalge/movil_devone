@@ -131,10 +131,10 @@ class _ProjectsViewState extends State<ProjectsView> {
         icon: Icons.folder_open_outlined,
         title: _searchController.text.isNotEmpty
             ? 'Sin resultados'
-            : 'No hay proyectos en DevOne',
+            : 'No hay proyectos en SCMDev',
         message: _searchController.text.isNotEmpty
             ? 'No se encontraron proyectos con el término "${_searchController.text}".'
-            : 'Crea un proyecto en el servidor web de DevOne para verlo listado aquí.',
+            : 'Crea un proyecto en el servidor web de SCMDev para verlo listado aquí.',
         buttonText: 'Actualizar',
         onAction: _loadProjects,
       );
