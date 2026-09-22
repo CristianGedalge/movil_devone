@@ -27,14 +27,14 @@ void main() {
     expect(config.isDarkMode, isTrue);
   });
 
-  testWidgets('OneDevApp reflects dark theme mode', (WidgetTester tester) async {
+  testWidgets('SCMDevApp reflects dark theme mode', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({
       AppConfig.keyThemeMode: 'dark',
     });
     final config = await AppConfig.init();
     expect(config.themeMode, ThemeMode.dark);
 
-    await tester.pumpWidget(const OneDevApp());
+    await tester.pumpWidget(const SCMDevApp());
     await tester.pumpAndSettle();
 
     final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));

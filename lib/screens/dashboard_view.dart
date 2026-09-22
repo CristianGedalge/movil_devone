@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import '../core/config/app_config.dart';
 import '../core/theme/app_theme.dart';
 import '../models/project_model.dart';
-import '../models/issue_model.dart';
 import '../models/pull_request_model.dart';
 import '../services/onedev_service.dart';
 import 'project_detail_screen.dart';
@@ -11,14 +10,14 @@ import 'project_detail_screen.dart';
 class DashboardView extends StatefulWidget {
   final OneDevService service;
   final VoidCallback onNavigateToProjects;
-  final VoidCallback onNavigateToIssues;
+  final VoidCallback onNavigateToChat;
   final VoidCallback onNavigateToPullRequests;
 
   const DashboardView({
     super.key,
     required this.service,
     required this.onNavigateToProjects,
-    required this.onNavigateToIssues,
+    required this.onNavigateToChat,
     required this.onNavigateToPullRequests,
   });
 
@@ -30,8 +29,6 @@ class _DashboardViewState extends State<DashboardView> {
   bool _isLoading = true;
   String? _syncError;
   List<ProjectModel> _recentProjects = [];
-  int _totalIssues = 0;
-  int _openIssues = 0;
   int _totalPulls = 0;
 
   @override
@@ -49,11 +46,6 @@ class _DashboardViewState extends State<DashboardView> {
     try {
       final projects = await widget.service.getProjects(count: 5);
 
-      List<IssueModel> issues = [];
-      try {
-        issues = await widget.service.getIssues(count: 50);
-      } catch (_) {}
-
       List<PullRequestModel> pulls = [];
       try {
         pulls = await widget.service.getPullRequests(count: 50);
@@ -62,8 +54,6 @@ class _DashboardViewState extends State<DashboardView> {
       if (mounted) {
         setState(() {
           _recentProjects = projects;
-          _totalIssues = issues.length;
-          _openIssues = issues.where((i) => i.isOpen).length;
           _totalPulls = pulls.length;
         });
       }
@@ -178,7 +168,7 @@ class _DashboardViewState extends State<DashboardView> {
                 ),
                 const SizedBox(height: 3),
                 const Text(
-                  'Resumen de tus proyectos y actividad en DevOne',
+                  'Resumen de tus proyectos y actividad en SCMDev',
                   style: TextStyle(
                     color: Color(0xFF94A3B8),
                     fontSize: 12,
@@ -238,12 +228,12 @@ class _DashboardViewState extends State<DashboardView> {
         const SizedBox(width: 12),
         Expanded(
           child: _buildMetricCard(
-            title: 'Issues Abiertas',
-            count: '$_openIssues',
-            subtitle: 'de $_totalIssues totales',
-            icon: Icons.bug_report_outlined,
-            color: AppTheme.statusWarning,
-            onTap: widget.onNavigateToIssues,
+            title: 'Asistente IA',
+            count: 'Chat',
+            subtitle: 'Consultas y Git',
+            icon: Icons.smart_toy_outlined,
+            color: const Color(0xFF10B981),
+            onTap: widget.onNavigateToChat,
           ),
         ),
         const SizedBox(width: 12),
@@ -376,7 +366,7 @@ class _DashboardViewState extends State<DashboardView> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Crea o únete a un proyecto en DevOne para verlo aquí',
+                'Crea o únete a un proyecto en SCMDev para verlo aquí',
                 style: TextStyle(color: context.textSecondaryColor, fontSize: 12),
               ),
             ],
@@ -458,9 +448,9 @@ class _DashboardViewState extends State<DashboardView> {
           const SizedBox(width: 12),
           Expanded(
             child: OutlinedButton.icon(
-              onPressed: widget.onNavigateToIssues,
-              icon: const Icon(Icons.bug_report, size: 18),
-              label: const Text('Ver Incidencias', style: TextStyle(fontSize: 12)),
+              onPressed: widget.onNavigateToChat,
+              icon: const Icon(Icons.smart_toy_outlined, size: 18),
+              label: const Text('Abrir Chat IA', style: TextStyle(fontSize: 12)),
             ),
           ),
         ],

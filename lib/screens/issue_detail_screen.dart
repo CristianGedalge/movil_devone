@@ -72,7 +72,7 @@ class IssueDetailScreen extends StatelessWidget {
                       Icon(Icons.person_outline, size: 16, color: context.textSecondaryColor),
                       const SizedBox(width: 6),
                       Text(
-                        issue.submitterName ?? 'Usuario DevOne',
+                        issue.submitterName ?? 'Usuario SCMDev',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

@@ -4,7 +4,7 @@ import '../core/theme/app_theme.dart';
 import '../services/onedev_service.dart';
 import 'dashboard_view.dart';
 import 'projects_view.dart';
-import 'issues_view.dart';
+import 'chat_view.dart';
 import 'pull_requests_view.dart';
 import 'login_screen.dart';
 
@@ -188,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
               fit: BoxFit.contain,
             ),
             const SizedBox(width: 10),
-            const Text('DevOne'),
+            const Text('SCMDev'),
           ],
         ),
         actions: [
@@ -251,11 +251,11 @@ class _HomeScreenState extends State<HomeScreen> {
             DashboardView(
               service: _service,
               onNavigateToProjects: () => setState(() => _currentIndex = 1),
-              onNavigateToIssues: () => setState(() => _currentIndex = 2),
+              onNavigateToChat: () => setState(() => _currentIndex = 2),
               onNavigateToPullRequests: () => setState(() => _currentIndex = 3),
             ),
             ProjectsView(service: _service),
-            IssuesView(service: _service),
+            ChatView(service: _service),
             PullRequestsView(service: _service),
           ],
         ),
@@ -279,9 +279,9 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Proyectos',
           ),
           NavigationDestination(
-            icon: Icon(Icons.bug_report_outlined),
-            selectedIcon: Icon(Icons.bug_report),
-            label: 'Issues',
+            icon: Icon(Icons.smart_toy_outlined),
+            selectedIcon: Icon(Icons.smart_toy),
+            label: 'Chat IA',
           ),
           NavigationDestination(
             icon: Icon(Icons.call_merge_outlined),

@@ -170,7 +170,7 @@ class _PullRequestsViewState extends State<PullRequestsView> {
                       Icon(Icons.person_outline, size: 14, color: context.textSecondaryColor),
                       const SizedBox(width: 4),
                       Text(
-                        pr.submitterName ?? 'Colaborador DevOne',
+                        pr.submitterName ?? 'Colaborador SCMDev',
                         style: TextStyle(fontSize: 11, color: context.textSecondaryColor),
                       ),
                     ],
