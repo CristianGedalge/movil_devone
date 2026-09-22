@@ -182,10 +182,14 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Row(
           children: [
-            Image.asset(
-              'assets/images/logo.png',
-              height: 26,
-              fit: BoxFit.contain,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.asset(
+                'assets/images/logo.png',
+                height: 26,
+                width: 26,
+                fit: BoxFit.contain,
+              ),
             ),
             const SizedBox(width: 10),
             const Text('SCMDev'),

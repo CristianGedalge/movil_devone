@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../core/theme/app_theme.dart';
 import '../models/chat_message_model.dart';
 import '../models/project_model.dart';
@@ -22,6 +23,11 @@ class _ChatViewState extends State<ChatView> {
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
 
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  bool _speechAvailable = false;
+  bool _isListening = false;
+  String _textBeforeSpeech = '';
+
   List<ProjectModel> _projects = [];
   ProjectModel? _selectedProject;
   bool _loadingProjects = false;
@@ -32,6 +38,83 @@ class _ChatViewState extends State<ChatView> {
     _chatService = ChatService(widget.service);
     _chatService.addListener(_onChatUpdated);
     _loadProjects();
+    _initSpeech();
+  }
+
+  Future<void> _initSpeech() async {
+    try {
+      final available = await _speech.initialize(
+        onStatus: (status) {
+          if (status == 'done' || status == 'notListening') {
+            if (mounted) setState(() => _isListening = false);
+          }
+        },
+        onError: (errorNotification) {
+          if (mounted) {
+            setState(() => _isListening = false);
+          }
+        },
+      );
+      if (mounted) {
+        setState(() => _speechAvailable = available);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _speechAvailable = false);
+      }
+    }
+  }
+
+  Future<void> _toggleListening() async {
+    if (_isListening) {
+      await _speech.stop();
+      if (mounted) setState(() => _isListening = false);
+      return;
+    }
+
+    if (!_speechAvailable) {
+      await _initSpeech();
+      if (!_speechAvailable) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('El micrófono no está disponible o no se otorgaron permisos.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    _textBeforeSpeech = _textController.text;
+    setState(() => _isListening = true);
+
+    try {
+      await _speech.listen(
+        listenOptions: stt.SpeechListenOptions(
+          partialResults: true,
+          listenMode: stt.ListenMode.dictation,
+        ),
+        onResult: (result) {
+          if (mounted) {
+            setState(() {
+              final words = result.recognizedWords;
+              if (_textBeforeSpeech.isEmpty) {
+                _textController.text = words;
+              } else {
+                _textController.text = '$_textBeforeSpeech $words'.trim();
+              }
+              _textController.selection = TextSelection.fromPosition(
+                TextPosition(offset: _textController.text.length),
+              );
+            });
+          }
+        },
+      );
+    } catch (_) {
+      if (mounted) setState(() => _isListening = false);
+    }
   }
 
   void _onChatUpdated() {
@@ -71,6 +154,7 @@ class _ChatViewState extends State<ChatView> {
 
   @override
   void dispose() {
+    _speech.stop();
     _chatService.removeListener(_onChatUpdated);
     _chatService.dispose();
     _textController.dispose();
@@ -80,6 +164,10 @@ class _ChatViewState extends State<ChatView> {
   }
 
   void _handleSend([String? presetText]) {
+    if (_isListening) {
+      _speech.stop();
+      setState(() => _isListening = false);
+    }
     final text = presetText ?? _textController.text;
     if (text.trim().isEmpty || _chatService.isLoading) return;
 
@@ -659,50 +747,108 @@ class _ChatViewState extends State<ChatView> {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
+          if (_isListening)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: context.cardColorHigher,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: context.borderColor),
+                color: Colors.redAccent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.redAccent.withValues(alpha: 0.35)),
               ),
-              child: TextField(
-                controller: _textController,
-                focusNode: _focusNode,
-                textCapitalization: TextCapitalization.sentences,
-                minLines: 1,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  hintText: 'Pregunta algo sobre tus proyectos o git...',
-                  hintStyle: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.symmetric(vertical: 10),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Colors.redAccent,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Escuchando... habla para dictar',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.only(left: 14, right: 6),
+                  decoration: BoxDecoration(
+                    color: context.cardColorHigher,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: _isListening ? Colors.redAccent : context.borderColor,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _textController,
+                          focusNode: _focusNode,
+                          textCapitalization: TextCapitalization.sentences,
+                          minLines: 1,
+                          maxLines: 4,
+                          decoration: InputDecoration(
+                            hintText: _isListening
+                                ? 'Escuchando tu voz...'
+                                : 'Pregunta algo sobre tus proyectos o git...',
+                            hintStyle: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                          onSubmitted: (_) => _handleSend(),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: _isListening ? 'Detener dictado' : 'Dictar por voz',
+                        icon: Icon(
+                          _isListening ? Icons.mic_rounded : Icons.mic_none_rounded,
+                          color: _isListening ? Colors.redAccent : context.textSecondaryColor,
+                          size: 22,
+                        ),
+                        onPressed: _toggleListening,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                      ),
+                    ],
+                  ),
                 ),
-                onSubmitted: (_) => _handleSend(),
               ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          IconButton.filled(
-            onPressed: _chatService.isLoading ? null : () => _handleSend(),
-            icon: _chatService.isLoading
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                : const Icon(Icons.send_rounded, size: 20),
-            style: IconButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.all(12),
-            ),
+              const SizedBox(width: 8),
+              IconButton.filled(
+                onPressed: _chatService.isLoading ? null : () => _handleSend(),
+                icon: _chatService.isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(Icons.send_rounded, size: 20),
+                style: IconButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.all(12),
+                ),
+              ),
+            ],
           ),
         ],
       ),
