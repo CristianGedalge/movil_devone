@@ -19,23 +19,16 @@ class AppConfig extends ChangeNotifier {
   static const String keyUserId = 'onedev_user_id';
   static const String keyThemeMode = 'onedev_theme_mode';
 
-  // URL predeterminada del backend leída desde .env (o fallback en producción)
+  // URL predeterminada del backend leída exclusivamente desde .env
   static String get defaultBackendUrl {
     final envUrl = dotenv.isInitialized ? dotenv.env['SCMDEV_BACKEND_URL'] : null;
-    if (envUrl != null && envUrl.isNotEmpty) return envUrl;
-    return const String.fromEnvironment(
-      'BACKEND_URL',
-      defaultValue: 'https://scmdev.erikaguilarchuviru.dev/~api',
-    );
+    if (envUrl != null && envUrl.trim().isNotEmpty) return envUrl.trim();
+    return const String.fromEnvironment('BACKEND_URL', defaultValue: '');
   }
-  static const String defaultDeployedUrl = 'https://scmdev.erikaguilarchuviru.dev/~api';
-  static const String defaultLocalIpUrl = 'http://192.168.100.50:6610/~api';
-  static const String defaultEmulatorUrl = 'http://10.0.2.2:6610/~api';
-  static const String defaultLocalhostUrl = 'http://localhost:6610/~api';
 
   late SharedPreferences _prefs;
 
-  String _baseUrl = defaultDeployedUrl;
+  String _baseUrl = defaultBackendUrl;
   AuthType _authType = AuthType.basic;
   String _token = '';
   String _username = '';
@@ -69,16 +62,15 @@ class AppConfig extends ChangeNotifier {
   Future<void> _load() async {
     _prefs = await SharedPreferences.getInstance();
 
-    final savedUrl = _prefs.getString(keyBaseUrl);
-    // Si no hay URL guardada o tenía la IP local anterior, actualizar a la URL desplegada en la nube:
-    if (savedUrl == null || 
-        savedUrl.contains('10.0.2.2') || 
-        savedUrl.contains('192.168.100.50') || 
-        savedUrl.contains('localhost')) {
-      _baseUrl = defaultBackendUrl;
+    final envUrl = defaultBackendUrl;
+    if (envUrl.isNotEmpty) {
+      _baseUrl = envUrl;
       await _prefs.setString(keyBaseUrl, _baseUrl);
     } else {
-      _baseUrl = savedUrl;
+      final savedUrl = _prefs.getString(keyBaseUrl);
+      if (savedUrl != null && savedUrl.isNotEmpty) {
+        _baseUrl = savedUrl;
+      }
     }
 
     final authTypeIndex = _prefs.getInt(keyAuthType) ?? AuthType.basic.index;
