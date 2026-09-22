@@ -102,10 +102,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ],
                         ),
-                        child: Image.asset(
-                          'assets/images/logo.png',
-                          height: 52,
-                          fit: BoxFit.contain,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: Image.asset(
+                            'assets/images/logo.png',
+                            height: 60,
+                            width: 60,
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       ),
                     ),
