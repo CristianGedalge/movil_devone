@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../core/config/app_config.dart';
 import '../models/chat_message_model.dart';
 import '../models/project_model.dart';
 import '../services/onedev_service.dart';
@@ -45,37 +46,27 @@ class ChatService extends ChangeNotifier {
   String get llmApiKey => _llmApiKey;
   String get llmModel => _llmModel;
 
-  // Credenciales cargadas desde .env
+  // Credenciales cargadas exclusivamente desde .env
   static String get defaultCloudUrl {
     final envUrl = dotenv.isInitialized ? dotenv.env['AI_PROXY_URL'] : null;
-    return (envUrl != null && envUrl.isNotEmpty)
-        ? envUrl
-        : 'http://54.160.217.3:8443/v1';
+    return (envUrl != null && envUrl.trim().isNotEmpty) ? envUrl.trim() : '';
   }
 
   static String get defaultCloudApiKey {
     final envKey = dotenv.isInitialized ? dotenv.env['AI_PROXY_API_KEY'] : null;
-    return (envKey != null && envKey.isNotEmpty)
-        ? envKey
-        : '5ac58f4bd44cb7697a1d1aa481ca4bf6';
+    return (envKey != null && envKey.trim().isNotEmpty) ? envKey.trim() : '';
   }
 
   Future<void> selectModel(String modelName) async {
     _llmModel = modelName;
     _providerType = AiProviderType.customLlm;
-    if (_llmBaseUrl.contains('10.0.2.2') ||
-        _llmBaseUrl.contains('192.168.') ||
-        _llmBaseUrl.contains('localhost') ||
-        _llmBaseUrl.isEmpty) {
-      _llmBaseUrl = defaultCloudUrl;
-      _llmApiKey = defaultCloudApiKey;
-    }
+    _llmBaseUrl = defaultCloudUrl;
+    _llmApiKey = defaultCloudApiKey;
+
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(keyProvider, 'customLlm');
       await prefs.setString(keyLlmModel, _llmModel);
-      await prefs.setString(keyLlmBaseUrl, _llmBaseUrl);
-      await prefs.setString(keyLlmApiKey, _llmApiKey);
     } catch (_) {}
     notifyListeners();
   }
@@ -114,21 +105,25 @@ class ChatService extends ChangeNotifier {
             ? AiProviderType.customLlm
             : AiProviderType.scmdevAssistant;
       }
-      final savedUrl = prefs.getString(keyLlmBaseUrl);
-      if (savedUrl != null &&
-          (savedUrl.contains('10.0.2.2') ||
-           savedUrl.contains('192.168.') ||
-           savedUrl.contains('localhost'))) {
-        await prefs.remove(keyLlmBaseUrl);
-        await prefs.remove(keyLlmApiKey);
-        _llmBaseUrl = defaultCloudUrl;
-        _llmApiKey = defaultCloudApiKey;
-      } else if (savedUrl != null && savedUrl.isNotEmpty) {
-        _llmBaseUrl = savedUrl;
+      final envUrl = defaultCloudUrl;
+      final envKey = defaultCloudApiKey;
+
+      if (envUrl.isNotEmpty) {
+        _llmBaseUrl = envUrl;
+      } else {
+        final savedUrl = prefs.getString(keyLlmBaseUrl);
+        if (savedUrl != null && savedUrl.isNotEmpty) {
+          _llmBaseUrl = savedUrl;
+        }
       }
-      final savedKey = prefs.getString(keyLlmApiKey);
-      if (savedKey != null && savedKey.isNotEmpty) {
-        _llmApiKey = savedKey;
+
+      if (envKey.isNotEmpty) {
+        _llmApiKey = envKey;
+      } else {
+        final savedKey = prefs.getString(keyLlmApiKey);
+        if (savedKey != null && savedKey.isNotEmpty) {
+          _llmApiKey = savedKey;
+        }
       }
       final savedModel = prefs.getString(keyLlmModel);
       if (savedModel != null && savedModel.isNotEmpty) {
@@ -376,11 +371,14 @@ class ChatService extends ChangeNotifier {
           final httpUrl = urls['http'] ?? '';
           final sshUrl = urls['ssh'] ?? '';
 
+          final rootBase = AppConfig.instance.baseUrl.replaceAll('/~api', '');
+          final defaultCloneUrl = '$rootBase/${activeProject.displayPath}.git';
+
           return ChatMessage.assistant(
             '📋 **Instrucciones de clonación para "${activeProject.name}":**\n\n'
             '**Vía HTTPS:**\n'
             '```bash\n'
-            'git clone ${httpUrl.isNotEmpty ? httpUrl : "https://scmdev.erikaguilarchuviru.dev/${activeProject.displayPath}.git"}\n'
+            'git clone ${httpUrl.isNotEmpty ? httpUrl : defaultCloneUrl}\n'
             '```\n\n'
             '${sshUrl.isNotEmpty ? "**Vía SSH:**\n```bash\ngit clone $sshUrl\n```\n\n" : ""}'
             '📌 Luego de clonar, accede a la carpeta con `cd ${activeProject.name}` y verifica el estado con `git status`.',
