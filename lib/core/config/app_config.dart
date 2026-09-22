@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum AuthType {
@@ -18,11 +19,15 @@ class AppConfig extends ChangeNotifier {
   static const String keyUserId = 'onedev_user_id';
   static const String keyThemeMode = 'onedev_theme_mode';
 
-  // URL predeterminada del backend desplegado en producción.
-  static const String defaultBackendUrl = String.fromEnvironment(
-    'BACKEND_URL',
-    defaultValue: 'https://scmdev.erikaguilarchuviru.dev/~api',
-  );
+  // URL predeterminada del backend leída desde .env (o fallback en producción)
+  static String get defaultBackendUrl {
+    final envUrl = dotenv.isInitialized ? dotenv.env['SCMDEV_BACKEND_URL'] : null;
+    if (envUrl != null && envUrl.isNotEmpty) return envUrl;
+    return const String.fromEnvironment(
+      'BACKEND_URL',
+      defaultValue: 'https://scmdev.erikaguilarchuviru.dev/~api',
+    );
+  }
   static const String defaultDeployedUrl = 'https://scmdev.erikaguilarchuviru.dev/~api';
   static const String defaultLocalIpUrl = 'http://192.168.100.50:6610/~api';
   static const String defaultEmulatorUrl = 'http://10.0.2.2:6610/~api';
@@ -30,7 +35,7 @@ class AppConfig extends ChangeNotifier {
 
   late SharedPreferences _prefs;
 
-  String _baseUrl = defaultBackendUrl;
+  String _baseUrl = defaultDeployedUrl;
   AuthType _authType = AuthType.basic;
   String _token = '';
   String _username = '';

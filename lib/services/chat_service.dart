@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/chat_message_model.dart';
@@ -27,8 +28,8 @@ class ChatService extends ChangeNotifier {
   bool _isLoading = false;
 
   AiProviderType _providerType = AiProviderType.scmdevAssistant;
-  String _llmBaseUrl = 'http://54.160.217.3:8443/v1';
-  String _llmApiKey = '5ac58f4bd44cb7697a1d1aa481ca4bf6';
+  late String _llmBaseUrl = defaultCloudUrl;
+  late String _llmApiKey = defaultCloudApiKey;
   String _llmModel = 'Ollama';
 
   ChatService(this._oneDevService) {
@@ -43,8 +44,20 @@ class ChatService extends ChangeNotifier {
   String get llmApiKey => _llmApiKey;
   String get llmModel => _llmModel;
 
-  static const String defaultCloudUrl = 'http://54.160.217.3:8443/v1';
-  static const String defaultCloudApiKey = '5ac58f4bd44cb7697a1d1aa481ca4bf6';
+  // Credenciales cargadas desde .env
+  static String get defaultCloudUrl {
+    final envUrl = dotenv.isInitialized ? dotenv.env['AI_PROXY_URL'] : null;
+    return (envUrl != null && envUrl.isNotEmpty)
+        ? envUrl
+        : 'http://54.160.217.3:8443/v1';
+  }
+
+  static String get defaultCloudApiKey {
+    final envKey = dotenv.isInitialized ? dotenv.env['AI_PROXY_API_KEY'] : null;
+    return (envKey != null && envKey.isNotEmpty)
+        ? envKey
+        : '5ac58f4bd44cb7697a1d1aa481ca4bf6';
+  }
 
   Future<void> selectModel(String modelName) async {
     _llmModel = modelName;

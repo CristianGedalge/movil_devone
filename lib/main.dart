@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/config/app_config.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/home_screen.dart';
@@ -6,6 +7,13 @@ import 'screens/login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Cargar variables de entorno desde .env
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint("Aviso: No se pudo cargar el archivo .env ($e). Usando valores predeterminados.");
+  }
 
   // Initialize persistent configuration and session state
   await AppConfig.init();
