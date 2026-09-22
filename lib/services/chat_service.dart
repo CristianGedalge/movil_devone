@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -62,7 +63,10 @@ class ChatService extends ChangeNotifier {
   Future<void> selectModel(String modelName) async {
     _llmModel = modelName;
     _providerType = AiProviderType.customLlm;
-    if (_llmBaseUrl.contains('10.0.2.2') || _llmBaseUrl.isEmpty) {
+    if (_llmBaseUrl.contains('10.0.2.2') ||
+        _llmBaseUrl.contains('192.168.') ||
+        _llmBaseUrl.contains('localhost') ||
+        _llmBaseUrl.isEmpty) {
       _llmBaseUrl = defaultCloudUrl;
       _llmApiKey = defaultCloudApiKey;
     }
@@ -111,7 +115,15 @@ class ChatService extends ChangeNotifier {
             : AiProviderType.scmdevAssistant;
       }
       final savedUrl = prefs.getString(keyLlmBaseUrl);
-      if (savedUrl != null && savedUrl.isNotEmpty && !savedUrl.contains('10.0.2.2')) {
+      if (savedUrl != null &&
+          (savedUrl.contains('10.0.2.2') ||
+           savedUrl.contains('192.168.') ||
+           savedUrl.contains('localhost'))) {
+        await prefs.remove(keyLlmBaseUrl);
+        await prefs.remove(keyLlmApiKey);
+        _llmBaseUrl = defaultCloudUrl;
+        _llmApiKey = defaultCloudApiKey;
+      } else if (savedUrl != null && savedUrl.isNotEmpty) {
         _llmBaseUrl = savedUrl;
       }
       final savedKey = prefs.getString(keyLlmApiKey);
@@ -194,8 +206,12 @@ class ChatService extends ChangeNotifier {
     if (!urlStr.endsWith('/')) urlStr += '/';
     final completionsUri = Uri.parse('${urlStr}chat/completions');
 
+    final projectDescription = (activeProject?.description != null && activeProject!.description!.trim().isNotEmpty)
+        ? 'Descripción del proyecto: "${activeProject.description!.trim()}". '
+        : '';
+
     final projectContext = activeProject != null
-        ? 'El usuario está trabajando en el proyecto "${activeProject.name}" (Ruta: ${activeProject.displayPath}). '
+        ? 'El usuario está trabajando en el proyecto "${activeProject.name}" (Ruta: ${activeProject.displayPath}). $projectDescription'
         : 'SCMDev es una plataforma de control de versiones y colaboración Git. ';
 
     var modelToUse = 'llama3.2:latest';
@@ -205,6 +221,9 @@ class ChatService extends ChangeNotifier {
     } else {
       modelToUse = 'llama3.2:latest';
     }
+
+    debugPrint('>>> [ChatService] Enviando a: $completionsUri');
+    debugPrint('>>> [ChatService] Modelo: $modelToUse, API Key: ${_llmApiKey.isNotEmpty ? "${_llmApiKey.substring(0, 5)}..." : "VACIA"}');
 
     String modelIdentity;
     if (modelToUse.contains('qwen')) {
@@ -217,9 +236,9 @@ class ChatService extends ChangeNotifier {
         '$modelIdentity'
         'Actúas como el asistente inteligente oficial de la plataforma SCMDev. '
         '$projectContext'
-        'Responde de manera precisa, profesional, clara y concisa en español. '
+        'Responde de manera precisa, profesional, clara y concisa en español (máximo 2 párrafos breves a menos que te pidan código detallado). '
         'Nunca digas que eres Claude ni que fuiste creado por Anthropic. '
-        'Usa formato Markdown con viñetas y bloques de código cuando sea apropiado.';
+        'Usa formato Markdown con viñetas cuando sea apropiado.';
 
     final headers = <String, String>{
       'Content-Type': 'application/json',
@@ -237,7 +256,8 @@ class ChatService extends ChangeNotifier {
         {'role': 'user', 'content': query},
       ],
       'temperature': 0.7,
-      'max_tokens': 600,
+      'max_tokens': 250,
+      'stream': false,
     };
 
     try {
@@ -247,7 +267,7 @@ class ChatService extends ChangeNotifier {
             headers: headers,
             body: jsonEncode(payload),
           )
-          .timeout(const Duration(seconds: 25));
+          .timeout(const Duration(seconds: 400));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final data = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
@@ -265,9 +285,14 @@ class ChatService extends ChangeNotifier {
           'Respuesta: ${response.body.length > 150 ? "${response.body.substring(0, 150)}..." : response.body}',
         );
       }
+    } on TimeoutException {
+      return ChatMessage.error(
+        'El servidor de IA tardó en responder más de 400 segundos.\n'
+        'El servidor en la nube está con alta carga o generando una respuesta extensa. Por favor reintenta con una consulta más puntual.',
+      );
     } catch (e) {
       return ChatMessage.error(
-        'No se pudo conectar con el servicio de IA de SCMDev ($e).\n'
+        'No se pudo conectar a "$completionsUri": $e\n'
         'Verifica tu conexión a internet o intenta nuevamente en unos momentos.',
       );
     }
